@@ -16,7 +16,7 @@ check_result() {
 
 # 检查 Docker 容器是否存在
 check_docker_container() {
-    if [ $(docker ps -a -q -f name=steamcmd) ]; then
+    if [ $(docker ps -a -q -f name=pal) ]; then
         return 0
     else
         return 1
@@ -243,7 +243,7 @@ install_pal_server(){
         echo -e "${Red}幻兽帕鲁服务端已存在，安装失败！${Font}"
     else
         echo -e "${Green}开始安装幻兽帕鲁服务端...${Font}"
-        CONTAINER_ID=$(docker run -dit --name steamcmd --net host cm2network/steamcmd)
+        CONTAINER_ID=$(docker run -dit --name pal --net host cm2network/steamcmd)
         check_result "创建 Docker 容器"
         docker exec -it $CONTAINER_ID bash -c "/home/steam/steamcmd/steamcmd.sh +login anonymous +app_update 2394010 validate +quit"
         check_result "安装游戏"
@@ -263,7 +263,7 @@ install_pal_server(){
 start_pal_server(){
     if check_docker_container; then
         echo -e "${Green}开始启动幻兽帕鲁服务端...${Font}"
-        docker start steamcmd
+        docker start pal
         check_result "启动 Docker 容器"
         check_restart_script
         check_result "检测restart.sh 脚本"
@@ -280,7 +280,7 @@ start_pal_server(){
 stop_pal_server(){
     if check_docker_container; then
         echo -e "${Green}开始停止幻兽帕鲁服务端...${Font}"
-        docker stop steamcmd
+        docker stop pal
         check_result "停止 Docker 容器"
         echo -e "${Green}幻兽帕鲁服务端已成功停止！${Font}"
     else
@@ -293,11 +293,11 @@ modify_config(){
     if check_docker_container; then
         if [ -f ./PalWorldSettings.ini ]; then
             echo -e "${Green}开始修改服务端配置...${Font}"
-            docker restart steamcmd
+            docker restart pal
             check_result "停止服务端"
-            docker cp ./PalWorldSettings.ini steamcmd:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/Config/LinuxServer/
+            docker cp ./PalWorldSettings.ini pal:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/Config/LinuxServer/
             check_result "复制配置文件至容器"
-            docker exec -u root steamcmd chmod 777 /home/steam/Steam/steamapps/common/PalServer/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
+            docker exec -u root pal chmod 777 /home/steam/Steam/steamapps/common/PalServer/Pal/Saved/Config/LinuxServer/PalWorldSettings.ini
             check_result "修改配置文件权限"
             check_result "修改服务端配置"
             echo -e "${Green}服务端配置已成功修改！服务端已停止，重启后生效！${Font}"
@@ -400,7 +400,7 @@ restart_pal_server(){
 check_pal_server_status(){
     if check_docker_container; then
         echo -e "${Green}幻兽帕鲁服务端状态如下：${Font}"
-        docker stats steamcmd --no-stream
+        docker stats pal --no-stream
     else
         echo -e "${Red}幻兽帕鲁服务端不存在！${Font}"
     fi
@@ -416,9 +416,9 @@ update_pal_server(){
         read -p "新的游戏版本可用，版本为 $latestGameVersion。是否要更新至最新版游戏? (y/n)" answer
         case ${answer:0:1} in
             y|Y )
-                if [ $(docker ps -a -q -f name=steamcmd) ]; then
+                if [ $(docker ps -a -q -f name=pal) ]; then
                     echo -e "${Green}开始启动幻兽帕鲁服务端...${Font}"
-                    docker exec -it steamcmd /bin/bash -c "/home/steam/steamcmd/steamcmd.sh +login anonymous +app_update 2394010 validate +quit"
+                    docker exec -it pal /bin/bash -c "/home/steam/steamcmd/steamcmd.sh +login anonymous +app_update 2394010 validate +quit"
                     check_result "更新服务端"
                     # 更新本地的版本信息文件
                     jq ".gameVersion = \"$latestGameVersion\"" version.json > temp.json && mv temp.json version.json
@@ -443,8 +443,8 @@ update_pal_server(){
 delete_pal_server(){
     if check_docker_container; then
         echo -e "${Green}开始删除幻兽帕鲁服务端...${Font}"
-        docker stop steamcmd
-        docker rm steamcmd
+        docker stop pal
+        docker rm pal
         check_result "删除服务端"
         echo -e "${Green}幻兽帕鲁服务端已成功删除！${Font}"
     else
@@ -466,10 +466,10 @@ update_patch_version() {
                 wget -O PalServer-Linux-Test $downloadLink
                 check_result "下载补丁"
                 # 替换 Docker 容器内的源文件
-                docker cp PalServer-Linux-Test steamcmd:/home/steam/Steam/steamapps/common/PalServer/Pal/Binaries/Linux/PalServer-Linux-Test
+                docker cp PalServer-Linux-Test pal:/home/steam/Steam/steamapps/common/PalServer/Pal/Binaries/Linux/PalServer-Linux-Test
                 check_result "替换源文件"
                 # 授权文件
-                docker exec -u 0 -it steamcmd chmod +x /home/steam/Steam/steamapps/common/PalServer/Pal/Binaries/Linux/PalServer-Linux-Test
+                docker exec -u 0 -it pal chmod +x /home/steam/Steam/steamapps/common/PalServer/Pal/Binaries/Linux/PalServer-Linux-Test
                 check_result "授权补丁"
                 # 更新本地的版本信息文件
                 jq ".PatchVersion = \"$latestPatchVersion\"" version.json > temp.json && mv temp.json version.json
@@ -488,8 +488,8 @@ import_pal_server(){
         read -p "请确认已将幻兽帕鲁存档及配置(Saved)文件夹放入 /data/palworld 目录，然后回车继续" import
         echo -e "${Green}开始导入幻兽帕鲁存档及配置...${Font}"
         chmod -R 777 /data/palworld/
-        docker restart steamcmd
-        docker cp -a /data/palworld/Saved/ steamcmd:/home/steam/Steam/steamapps/common/PalServer/Pal/
+        docker restart pal
+        docker cp -a /data/palworld/Saved/ pal:/home/steam/Steam/steamapps/common/PalServer/Pal/
         check_result "导入存档及配置"
         echo -e "${Green}开始重启幻兽帕鲁服务端...${Font}"
         check_restart_script
@@ -540,7 +540,7 @@ export_pal_server() {
         echo -e "${Green}导出的幻兽帕鲁存档及配置将会存放在 /data/palworld 目录下！${Font}"
         echo -e "${Green}开始导出幻兽帕鲁存档及配置...${Font}"
         mkdir -p /data/palworld
-        docker cp steamcmd:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/ /data/palworld/
+        docker cp pal:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/ /data/palworld/
         check_result "导出存档及配置"
         echo -e "${Green}幻兽帕鲁存档及配置已成功导出！${Font}"
     else
