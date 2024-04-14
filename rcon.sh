@@ -8,7 +8,7 @@ MAX_MEMORY=$(jq -r '.MAX_MEMORY' config.json) # 单位GB
 MEMORY_USAGE_THRESHOLD=$(jq -r '.MEMORY_USAGE_THRESHOLD' config.json) # 内存使用率阈值，单位%
 RCON_TOOL="./mcrcon"
 # 容器名
-CONTAINER_NAME="steamcmd"
+CONTAINER_NAME="pal"
 
 # 获取容器的内存使用量
 MEM_USAGE=$(docker stats --no-stream --format "{{.MemUsage}}" $CONTAINER_NAME | awk '{print $1}') # 单位 GiB

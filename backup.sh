@@ -6,7 +6,7 @@ check_result() {
     fi
 }
 check_docker_container() {
-    if [ $(docker ps -a -q -f name=steamcmd) ]; then
+    if [ $(docker ps -a -q -f name=pal) ]; then
         return 0
     else
         return 1
@@ -20,7 +20,7 @@ export_pal_server() {
         echo -e "${Green}导出的幻兽帕鲁存档及配置将会存放在 $backup_dir 目录下！${Font}"
         echo -e "${Green}开始导出幻兽帕鲁存档及配置...${Font}"
         mkdir -p "$backup_dir"
-        docker cp steamcmd:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/ "$backup_dir"
+        docker cp pal:/home/steam/Steam/steamapps/common/PalServer/Pal/Saved/ "$backup_dir"
         check_result "导出存档及配置"
         echo -e "${Green}幻兽帕鲁存档及配置已成功导出到 $backup_dir 目录！${Font}"
         
